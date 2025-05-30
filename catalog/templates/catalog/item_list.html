@@ -1,0 +1,323 @@
+<!-- PriceTracker/catalog/templates/catalog/item_list.html -->
+ {% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if page_title %}{{ page_title }}{% else %}Item List{% endif %} - PriceTracker</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    
+<div class="container">
+    <h1>{% if page_title %}{{ page_title }}{% else %}Available Items{% endif %}</h1>
+
+    {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+        <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <form method="GET" action="{% url 'catalog:item_list' %}" class="search-form" id="searchForm">
+        <input type="text" name="q" id="searchInput" placeholder="Search items by name..." value="{{ search_query|default_if_none:'' }}">
+        <button type="submit">Search</button>
+        {# Hidden input to carry selected tags for non-JS form submission (optional but good fallback) #}
+        <input type="hidden" name="tags" id="hiddenTagsInput" value="{{ selected_tags|join:','|default_if_none:'' }}">
+    </form>
+
+    {# Display Clickable Tags #}
+    {% if all_tags %}
+    <div class="tag-filter-container">
+        <strong>Filter by Tags:</strong>
+        <ul class="tag-list">
+            {% for tag in all_tags %}
+                <li class="tag-item {% if tag.name in selected_tags %}selected{% endif %}" data-tag-name="{{ tag.name }}">
+                    {{ tag.name }}
+                </li>
+            {% endfor %}
+        </ul>
+        {% if selected_tags %}
+            <a href="#" id="clearTagsLink" class="clear-filter-link">Clear Selected Tags</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div id="addPriceFormContainer" style="display:none;">
+        <h3>Add New Price for: <span id="formItemName" style="font-weight:normal;"></span></h3>
+        <form id="priceForm" method="POST" action="">
+            {% csrf_token %}
+            {{ price_form.as_p }}
+            <button type="submit">Save Price</button>
+            <button type="button" id="cancelAddPrice">Cancel</button>
+        </form>
+    </div>
+
+    <div id="itemListContainer">
+        {% include "catalog/_item_list_fragment.html" with items=items search_query=search_query selected_tags=selected_tags %}
+    </div>
+
+    <p style="margin-top: 20px;"><a href="{% url 'admin:index' %}">Admin Panel</a></p>
+</div>
+
+<script>
+    function getTodayDateString() {
+        const today = new Date();
+        return today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // --- Search and Filter Elements ---
+        const searchInput = document.getElementById('searchInput');
+        const itemListContainer = document.getElementById('itemListContainer');
+        const searchForm = document.getElementById('searchForm');
+        const hiddenTagsInput = document.getElementById('hiddenTagsInput'); // For non-JS fallback
+        const tagListElement = document.querySelector('.tag-list');
+        const clearTagsLink = document.getElementById('clearTagsLink');
+        
+        const ajaxSearchUrl = "{% url 'catalog:ajax_search_items' %}";
+        let debounceTimeout;
+
+        // --- STATE MANAGEMENT FOR FILTERS ---
+        let currentFilters = {
+            searchTerm: searchInput ? searchInput.value : '',
+            selectedTags: [] // Initialize as empty, will be populated
+        };
+
+        // Populate initial selectedTags from hidden input (set by server on page load)
+        if (hiddenTagsInput && hiddenTagsInput.value) {
+            currentFilters.selectedTags = hiddenTagsInput.value.split(',').filter(Boolean);
+        }
+        // Alternative/Preferred: Directly from Django context if available
+        // {% if selected_tags and selected_tags|length > 0 %}
+        //    currentFilters.selectedTags = {{ selected_tags|json_script:"initial-selected-tags" }}; // Use json_script for safety
+        // {% endif %}
+        // If using json_script, you'd get it like:
+        // const initialTagsData = JSON.parse(document.getElementById('initial-selected-tags').textContent);
+        // if (initialTagsData) currentFilters.selectedTags = initialTagsData;
+
+
+        function updateURLAndHiddenInput() {
+            const params = new URLSearchParams();
+            if (currentFilters.searchTerm.trim()) {
+                params.set('q', currentFilters.searchTerm.trim());
+            }
+            if (currentFilters.selectedTags.length > 0) {
+                params.set('tags', currentFilters.selectedTags.join(','));
+            }
+            
+            const queryString = params.toString();
+            const newUrl = queryString ? `?${queryString}` : window.location.pathname; // Keep base path if no params
+
+            history.pushState({path: newUrl}, '', newUrl);
+            
+            if (hiddenTagsInput) {
+                hiddenTagsInput.value = currentFilters.selectedTags.join(',');
+            }
+        }
+
+        function debounce(func, delay) {
+            return function(...args) {
+                clearTimeout(debounceTimeout);
+                debounceTimeout = setTimeout(() => func.apply(this, args), delay);
+            };
+        }
+
+        async function performSearch() {
+            updateURLAndHiddenInput(); 
+
+            const params = new URLSearchParams();
+            if (currentFilters.searchTerm.trim()) {
+                params.set('q', currentFilters.searchTerm.trim());
+            }
+            if (currentFilters.selectedTags.length > 0) {
+                params.set('tags', currentFilters.selectedTags.join(','));
+            }
+            
+            const url = `${ajaxSearchUrl}?${params.toString()}`;
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'GET', headers: {'X-Requested-With': 'XMLHttpRequest'},
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                itemListContainer.innerHTML = await response.text();
+                attachAddPriceButtonListeners(); 
+            } catch (error) {
+                console.error('Error during search:', error);
+                itemListContainer.innerHTML = '<p class="no-results">Error loading search results. Please try again.</p>';
+            }
+        }
+
+        const debouncedSearch = debounce(performSearch, 300);
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function () {
+                currentFilters.searchTerm = this.value;
+                debouncedSearch();
+            });
+        }
+
+        if (searchForm) { 
+            searchForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                currentFilters.searchTerm = searchInput ? searchInput.value : ''; 
+                performSearch(); 
+            });
+        }
+
+        // --- TAG FILTERING LOGIC ---
+        function updateTagVisualState() {
+            document.querySelectorAll('.tag-item').forEach(tagEl => {
+                if (currentFilters.selectedTags.includes(tagEl.dataset.tagName)) {
+                    tagEl.classList.add('selected');
+                } else {
+                    tagEl.classList.remove('selected');
+                }
+            });
+            if (clearTagsLink) {
+                clearTagsLink.style.display = currentFilters.selectedTags.length > 0 ? 'inline-block' : 'none';
+            }
+        }
+        
+        // Initial visual state for tags based on currentFilters
+        updateTagVisualState();
+
+
+        function toggleTag(tagName) {
+            const index = currentFilters.selectedTags.indexOf(tagName);
+            if (index > -1) {
+                currentFilters.selectedTags.splice(index, 1); 
+            } else {
+                currentFilters.selectedTags.push(tagName); 
+            }
+            updateTagVisualState();
+            performSearch();
+        }
+
+        if (tagListElement) {
+            tagListElement.addEventListener('click', function(event) {
+                if (event.target.classList.contains('tag-item')) {
+                    const tagName = event.target.dataset.tagName;
+                    if (tagName) { // Ensure tagName is not undefined
+                        toggleTag(tagName);
+                    }
+                }
+            });
+        }
+
+        if (clearTagsLink) {
+            clearTagsLink.addEventListener('click', function(event) {
+                event.preventDefault();
+                currentFilters.selectedTags = [];
+                updateTagVisualState(); // This will hide the link and deselect tags
+                performSearch();
+            });
+        }
+        
+
+        // --- ADD PRICE FORM LOGIC ---
+        const addPriceFormContainer = document.getElementById('addPriceFormContainer');
+        const priceForm = document.getElementById('priceForm'); 
+        const formItemNameSpan = document.getElementById('formItemName');
+        const cancelAddPriceBtn = document.getElementById('cancelAddPrice');
+
+        if (addPriceFormContainer && priceForm && formItemNameSpan && cancelAddPriceBtn) {
+            const dateRecordedInput = priceForm.elements['date_recorded'];
+            const storeSelect = priceForm.elements['store'];
+            const priceInput = priceForm.elements['price'];
+            const productUrlInput = priceForm.elements['product_url'];
+
+            function resetAndPrepareForm() {
+                if (priceForm) priceForm.reset(); // Check if priceForm exists
+                if (dateRecordedInput) {
+                    dateRecordedInput.value = getTodayDateString();
+                }
+                if (productUrlInput) {
+                    productUrlInput.value = ''; 
+                }
+            }
+
+            window.globalOpenAddPriceForm = async function(itemId, itemName) {
+                if (!priceForm || !formItemNameSpan) { // Guard against missing elements
+                    console.error("Add price form core elements missing.");
+                    return;
+                }
+                resetAndPrepareForm();
+                formItemNameSpan.textContent = itemName;
+                priceForm.action = `/catalog/item/${itemId}/add_price/`;
+
+                if (storeSelect) {
+                    try {
+                        const fetchUrl = `/catalog/ajax/item/${itemId}/last-purchase-details/`;
+                        const response = await fetch(fetchUrl);
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.store_id) {
+                                storeSelect.value = data.store_id;
+                            } else {
+                                storeSelect.selectedIndex = 0; 
+                            }
+                            
+                            if (productUrlInput && data.product_url) {
+                                productUrlInput.value = data.product_url;
+                            } else if (productUrlInput) {
+                                productUrlInput.value = ''; 
+                            }
+                        } else {
+                             storeSelect.selectedIndex = 0;
+                             if (productUrlInput) productUrlInput.value = '';
+                        }
+                    } catch (error) {
+                        // console.error('Error fetching last purchase details:', error); // Optional: uncomment for debugging
+                        if (storeSelect) storeSelect.selectedIndex = 0;
+                        if (productUrlInput) productUrlInput.value = '';
+                    }
+                }
+
+                if (addPriceFormContainer) addPriceFormContainer.style.display = 'block';
+                if (priceInput) {
+                    priceInput.focus();
+                }
+                if (addPriceFormContainer) addPriceFormContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            };
+
+            if (cancelAddPriceBtn) { // Check if button exists
+                cancelAddPriceBtn.addEventListener('click', function() {
+                    if (addPriceFormContainer) addPriceFormContainer.style.display = 'none';
+                });
+            }
+        } else {
+            console.error("One or more essential 'Add Price' form HTML components were not found. Add Price functionality will be disabled.");
+            window.globalOpenAddPriceForm = function() {
+                console.error("Cannot open price form: essential HTML components for the form are missing.");
+            };
+        }
+
+        function attachAddPriceButtonListeners() {
+            document.querySelectorAll('.add-price-btn').forEach(button => {
+                const newButton = button.cloneNode(true);
+                button.parentNode.replaceChild(newButton, button);
+                
+                newButton.addEventListener('click', function() {
+                    if (typeof window.globalOpenAddPriceForm === 'function') {
+                        window.globalOpenAddPriceForm(this.dataset.itemId, this.dataset.itemName);
+                    } else {
+                         console.error("globalOpenAddPriceForm is not defined or not a function.");
+                    }
+                });
+            });
+        }
+        
+        // Initial call for any buttons present on page load
+        attachAddPriceButtonListeners();
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,106 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title }} - PriceTracker</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body class="item-detail-page">
+    <div class="container">
+        <h1>{{ item.name }}</h1>
+
+        <div class="item-main-details-grid">  {# NEW: Main wrapper for image and right content #}
+            {% if item.image %}
+                <div class="item-image-container">
+                    <img src="{{ item.image.url }}" alt="{{ item.name }}" class="item-image-detail">
+                </div>
+            {% else %}
+                <div class="item-image-container no-image-placeholder-detail">
+                    No Image Available
+                </div>
+            {% endif %}
+
+            <div class="item-info-column"> {# NEW: Column for content next to the image #}
+                {% if item.description %}
+                    <div class="item-description">
+                        <h2>Description</h2>
+                        <p>{{ item.description|linebreaksbr }}</p>
+                    </div>
+                {% endif %}
+
+                {# Display Item Specifications #}
+                {% with specifications=item.specifications.all %}
+                    {% if specifications %}
+                        <div class="item-specifications">
+                            <h2>Specifications</h2> {# <--- REMOVE THIS LINE #}
+                            {% regroup specifications by attribute.group as grouped_specifications %}
+                            {% for group in grouped_specifications %}
+                                <div class="specification-group">
+                                    <h3>{{ group.grouper.name }}</h3>
+                                    <ul class="specification-list">
+                                        {% for spec in group.list %}
+                                            <li>
+                                                <strong>{{ spec.attribute.name }}:</strong>
+                                                <span>{{ spec.get_value_display }}</span>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                {% if tags %}
+                    <div class="tags item-tags-detail">
+                        <h2>Tags</h2>
+                        {% for tag in tags %}
+                            <span>{{ tag.name }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div> {# End item-info-column #}
+        </div> {# End item-main-details-grid #}
+
+
+        {# Price History remains below this main grid #}
+        <div class="price-history">
+            <h2>Price History</h2>
+            {% if price_entries %}
+                <ul>
+                    {% for entry in price_entries %}
+                        <li>
+                            <div class="entry-date">
+                                {% if entry.product_url %}
+                                    <a href="{{ entry.product_url }}" target="_blank" title="View product at store">
+                                        {{ entry.date_recorded|date:"Y-m-d" }}
+                                    </a>
+                                {% else %}
+                                    {{ entry.date_recorded|date:"Y-m-d" }}
+                                {% endif %}
+                            </div>
+                            <div class="entry-price">
+                                <span class="price">{{ entry.price }} {{ entry.currency }}</span>
+                                {% if entry.on_sale %}
+                                    <span class="sale-info">(Sale - Orig: {{ entry.pre_sale_price|default:"N/A" }} {{ entry.currency }})</span>
+                                {% endif %}
+                            </div>
+                            <div class="entry-store">
+                                <span class="store-label">Store:</span> <span class="store">{{ entry.store.name }}</span>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No price history available for this item yet.</p>
+            {% endif %}
+        </div>
+
+        <a href="{% url 'catalog:item_list' %}" class="back-link">« Back to Item List</a>
+        <br>
+        <a href="{% url 'admin:index' %}" class="back-link">Admin Panel</a>
+    </div>
+</body>
+</html>

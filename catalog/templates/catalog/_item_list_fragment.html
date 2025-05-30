@@ -1,0 +1,28 @@
+<!-- PriceTracker/catalog/templates/catalog/_item_list_fragment.html -->
+{% if items %}
+    <ul id="item-list-ul"> <!-- Added ID here if you want to target UL specifically -->
+        {% for item in items %}
+            <li>
+                {% if item.image %}
+                    <img src="{{ item.image.url }}" alt="{{ item.name }} image">
+                {% else %}
+                    <div class="no-image-placeholder">No Image</div> <!-- Replaced style with class -->
+                {% endif %}
+                <div class="item-details">
+                    <a href="{% url 'catalog:item_detail' item_id=item.id %}"><strong>{{ item.name }}</strong></a>
+                    {% if item.description %}
+                        <p>{{ item.description|truncatewords:20 }}</p> <!-- Shorter truncate for list -->
+                    {% endif %}
+                    <!-- ADD PRICE BUTTON -->
+                    <button class="add-price-btn" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}">
+                        Add Price
+                    </button>
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+{% elif search_query %}
+    <p class="no-results">No items found matching your search for "<strong>{{ search_query }}</strong>".</p>
+{% else %}
+    <p class="no-results">No items found.</p>
+{% endif %}

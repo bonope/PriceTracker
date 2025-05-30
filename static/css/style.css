@@ -1,0 +1,461 @@
+/* PriceTracker/static/css/style.css */
+
+/* General Body and Typography */
+body {
+    font-family: sans-serif;
+    margin: 20px;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+h1, h2, h3 {
+    color: #333;
+}
+
+h1 {
+    /* Standard H1 styling */
+}
+
+h2 { /* General subheadings like Description, Price History, Tags */
+    margin-top: 30px;
+    margin-bottom: 10px;
+    font-size: 1.4em;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+h3 { /* For specification group names */
+    font-size: 1.1em;
+    color: #444;
+    margin-top: 15px; /* Space above a new group */
+    margin-bottom: 8px;
+}
+
+p {
+    line-height: 1.6;
+}
+
+a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Container */
+.container {
+    max-width: 900px;
+    margin: auto;
+    background: white;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    border-radius: 8px;
+}
+
+/* Django Messages */
+.messages {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 20px;
+}
+.messages li {
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    border-width: 1px;
+    border-style: solid;
+}
+.messages li.success {
+    background-color: #d4edda;
+    color: #155724;
+    border-color: #c3e6cb;
+}
+.messages li.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
+}
+
+/* Search Form (item_list.html) */
+.search-form {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+}
+.search-form input[type="text"] {
+    padding: 10px;
+    flex-grow: 1;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+.search-form button {
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.search-form button:hover {
+    background-color: #0056b3;
+}
+#clearSearchLink {
+    margin-left: 10px;
+    align-self: center;
+}
+
+
+/* Item List Styles (item_list.html & _item_list_fragment.html) */
+ul#item-list-ul {
+    list-style-type: none;
+    padding: 0;
+}
+ul#item-list-ul li {
+    background-color: #fff;
+    margin-bottom: 15px;
+    padding: 15px;
+    border-radius: 5px;
+    border: 1px solid #eee;
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+}
+ul#item-list-ul li img,
+ul#item-list-ul li .no-image-placeholder { /* Combined for item list image/placeholder */
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    flex-shrink: 0;
+}
+.no-image-placeholder { /* General placeholder style, used in item list */
+    background-color: #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #777;
+    font-size: 0.8em;
+    text-align: center;
+}
+.item-details { /* For text content in item list item */
+    flex-grow: 1;
+}
+.item-details a {
+    font-weight: bold;
+    font-size: 1.2em;
+    display: block;
+    margin-bottom: 5px;
+}
+.item-details p {
+    font-size: 0.9em;
+    color: #555;
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+.no-results { /* For item list search */
+    font-style: italic;
+    color: #777;
+    padding: 15px;
+    text-align: center;
+}
+
+/* Add Price Button (item_list.html) */
+.add-price-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+    margin-top: 10px;
+}
+.add-price-btn:hover {
+    background-color: #218838;
+}
+
+/* Add Price Form Container (item_list.html) */
+#addPriceFormContainer {
+    background-color: #e9ecef;
+    padding: 20px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    border: 1px solid #ced4da;
+}
+#addPriceFormContainer h3 { /* "Add New Price for: ItemName" */
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.2em; /* Adjusted from general h3 */
+}
+#addPriceFormContainer form p {
+    margin-bottom: 15px;
+}
+#addPriceFormContainer form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+#addPriceFormContainer form input[type="date"],
+#addPriceFormContainer form select,
+#addPriceFormContainer form input[type="number"],
+#addPriceFormContainer form input[type="text"],
+#addPriceFormContainer form input[type="url"] { /* Added url type */
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+#addPriceFormContainer form input[type="checkbox"] {
+    width: auto;
+    margin-right: 5px;
+    vertical-align: middle;
+}
+#addPriceFormContainer form .helptext {
+    font-size: 0.85em;
+    color: #6c757d;
+    display: block;
+    margin-top: -10px;
+    margin-bottom: 10px;
+}
+#addPriceFormContainer form button {
+    padding: 10px 15px;
+    margin-right: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+    font-size: 1em;
+}
+#addPriceFormContainer form button[type="submit"] {
+    background-color: #007bff;
+    color: white;
+}
+#addPriceFormContainer form button[type="submit"]:hover {
+    background-color: #0056b3;
+}
+#addPriceFormContainer form button#cancelAddPrice {
+    background-color: #6c757d;
+    color: white;
+}
+#addPriceFormContainer form button#cancelAddPrice:hover {
+    background-color: #5a6268;
+}
+
+/* Item Detail Page Styles */
+.item-main-details-grid {
+    display: grid;
+    grid-template-columns: auto 1fr; /* Image column auto, info column takes the rest */
+    gap: 25px; /* Increased gap */
+    margin-bottom: 30px;
+    align-items: start;
+}
+
+.item-image-container {
+    /* Container for the image on detail page */
+}
+
+.item-image-detail { /* Actual image on detail page */
+    max-width: 250px;
+    height: auto;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    display: block;
+}
+
+.no-image-placeholder-detail { /* Placeholder for item detail page image */
+    width: 250px;
+    height: 250px;
+    background-color: #e9ecef;
+    border: 1px dashed #ced4da;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    font-size: 0.9em;
+    text-align: center;
+}
+
+.item-info-column {
+    /* Column for description, specs, tags next to image */
+}
+
+.item-info-column > div:not(:last-child) { /* Add bottom margin to sections in info column */
+    margin-bottom: 20px;
+}
+
+.item-info-column h2 { /* Description, (Specifications - removed), Tags */
+    margin-top: 0; /* First element in this column should have no top margin */
+}
+/* .item-description is just a div wrapper, p tags inside are styled by general p */
+
+/* Item Specifications (item_detail.html) */
+.specification-group {
+    margin-bottom: 15px; /* Space between groups */
+}
+/* H3 for group name already styled */
+
+.specification-list {
+    list-style: none;
+    padding-left: 0;
+    margin-top: 5px; /* Space below group name */
+}
+
+.specification-list li {
+    font-size: 0.95em;
+    display: grid;
+    /* CHANGE THIS LINE: Use minmax */
+    grid-template-columns: minmax(150px, auto) 1fr; /* Min 150px, can grow. Adjust 150px. */
+    gap: 0 8px;
+    align-items: baseline;
+    margin-bottom: 6px;
+    padding: 2px 0;
+}
+
+.specification-list li strong { /* Attribute name */
+    text-align: left; 
+    /* The width is now controlled by the grid column.
+       If you want names to be right-aligned WITHIN this fixed width column: */
+    /* text-align: right; */
+    /* padding-right: 5px; /* Add if text-align: right, to space from colon */
+}
+
+.specification-list li span { /* Attribute value */
+    text-align: left;
+    color: #555;
+}
+
+/* Item Tags (item_detail.html) */
+.item-tags-detail span { /* Specific styling for tags on detail page */
+    background-color: #e0e0e0;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-right: 6px;
+    margin-bottom: 6px;
+    font-size: 0.9em;
+    display: inline-block;
+    line-height: 1.4;
+}
+
+/* Price History (item_detail.html) */
+.price-history {
+    clear: both; /* Ensure it's below the main grid */
+    margin-top: 30px;
+}
+.price-history ul {
+    list-style-type: none;
+    padding: 0;
+}
+.price-history li {
+    border: 1px solid #ddd;
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.price-history .entry-date {
+    flex-basis: 120px;
+    font-weight: bold;
+}
+.price-history .entry-price {
+    flex-grow: 1;
+    text-align: left;
+}
+.price-history .entry-price .price {
+    color: green;
+    font-size: 1.2em;
+    margin-right: 5px;
+}
+.price-history .entry-price .sale-info {
+    font-size: 0.9em;
+    color: #555;
+}
+.price-history .entry-store {
+    flex-basis: 200px;
+    text-align: right;
+}
+.price-history .entry-store .store-label {
+    font-size: 0.9em;
+    color: #777;
+}
+.price-history .entry-store .store {
+    font-weight: bold;
+}
+.price-history li .product-link { /* Link to product page from price history */
+    font-size: 0.9em;
+    margin-left: 5px;
+    display: block; /* Make it take its own line below the store or as part of a new line if wrapping */
+    flex-basis: 100%; /* If wrapping, make it full width on new line */
+    text-align: right; /* Align with store if possible, or left if preferred */
+    margin-top: 5px;
+}
+
+
+/* Back Links and Admin Links */
+.back-link {
+    margin-top: 20px;
+    display: inline-block;
+    margin-bottom: 10px;
+    margin-right: 15px;
+}
+
+p > a[href*="/admin/"] { /* Admin Panel link */
+    display: inline-block;
+    margin-top: 20px;
+    font-weight: bold;
+}
+
+.tag-filter-container {
+    margin-bottom: 20px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 4px;
+}
+.tag-filter-container strong {
+    display: block;
+    margin-bottom: 8px;
+}
+.tag-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.tag-item {
+    background-color: #e0e0e0;
+    color: #333;
+    padding: 5px 10px;
+    border-radius: 15px; /* Pill shape */
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+.tag-item:hover {
+    background-color: #007bff;
+    color: white;
+}
+.tag-item.selected {
+    background-color: #0056b3; /* Darker blue for selected */
+    color: white;
+    font-weight: bold;
+}
+.clear-filter-link {
+    font-size: 0.85em;
+    margin-top: 10px;
+    display: inline-block;
+    color: #dc3545; /* A reddish color for clear */
+}
+.clear-filter-link:hover {
+    text-decoration: underline;
+}
