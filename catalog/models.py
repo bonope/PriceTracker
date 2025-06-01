@@ -2,6 +2,7 @@
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
+from decimal import Decimal, ROUND_HALF_UP
 
 class Tag(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -112,28 +113,41 @@ class ItemSpecification(models.Model):
         return f"{self.item.name} - {self.attribute.name}: {self.get_value_display()}"
 
     def get_value(self):
-        """Returns the appropriate value based on the attribute's value_type."""
+        """Returns the raw, typed value for the specification."""
         if self.attribute.value_type == 'number' and self.value_numeric is not None:
-            if self.value_numeric == self.value_numeric.to_integral_value():
-                return self.value_numeric.to_integral_value()
             return self.value_numeric
         elif self.attribute.value_type == 'boolean' and self.value_boolean is not None:
             return self.value_boolean
         return self.value_text
 
     def get_value_display(self):
-        """Returns a display-friendly version of the value."""
-        val = self.get_value()
+        """Returns a user-friendly string representation of the value,
+           including unit and appropriate formatting."""
+        raw_value = self.get_value()
+
+        if raw_value is None:
+            return "N/A"
+
+        unit_str = f" {self.attribute.unit}" if self.attribute.unit else ""
 
         if self.attribute.value_type == 'boolean':
-            return "Yes" if val else ("No" if val is False else "N/A")
-        
-        if val is None:
-            return "N/A"
-            
-        unit = f" {self.attribute.unit}" if self.attribute.unit else ""
+            if isinstance(raw_value, bool):
+                return "Yes" if raw_value else "No"
+            else: 
+                return str(raw_value) 
 
-        return f"{val}{unit}"
+        elif self.attribute.value_type == 'number' and isinstance(raw_value, Decimal):
+            normalized_val = raw_value.normalize()
+            
+            if normalized_val == normalized_val.to_integral_value():
+                plain_integer_decimal = normalized_val.quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+                display_val_str = str(plain_integer_decimal)
+            else:
+                display_val_str = str(normalized_val)
+
+            return f"{display_val_str}{unit_str}"
+
+        return f"{str(raw_value)}{unit_str}"
 
     def save(self, *args, **kwargs):
         if self.value_text is not None:
